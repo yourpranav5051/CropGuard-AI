@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login — CropGuard AI</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav>
+  <div class="brand">🌱 CropGuard AI</div>
+  <div>
+    <a href="index.html">Home</a>
+    <a href="register.html">Register</a>
+  </div>
+</nav>
+
+<div class="card">
+  <h2>Welcome back</h2>
+  <div class="error-msg" id="errorMsg"></div>
+
+  <form id="loginForm">
+    <div class="form-group">
+      <label for="email">Email</label>
+      <input type="email" id="email" required placeholder="you@example.com">
+    </div>
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input type="password" id="password" required placeholder="Your password">
+    </div>
+    <button type="submit" class="btn" style="width:100%" id="submitBtn">Login</button>
+  </form>
+
+  <p class="form-footer">New here? <a href="register.html">Create an account</a></p>
+</div>
+
+<script src="js/api.js"></script>
+<script>
+document.getElementById("loginForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const errorMsg = document.getElementById("errorMsg");
+  const submitBtn = document.getElementById("submitBtn");
+  errorMsg.classList.remove("visible");
+
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+
+  submitBtn.disabled = true;
+  submitBtn.textContent = "Logging in...";
+
+  try {
+    const data = await apiRequest("/api/auth/login", {
+      method: "POST",
+      body: { email, password },
+    });
+    saveToken(data.access_token);
+    window.location.href = "dashboard.html";
+  } catch (err) {
+    errorMsg.textContent = err.message;
+    errorMsg.classList.add("visible");
+    submitBtn.disabled = false;
+    submitBtn.textContent = "Login";
+  }
+});
+</script>
+
+</body>
+</html>
