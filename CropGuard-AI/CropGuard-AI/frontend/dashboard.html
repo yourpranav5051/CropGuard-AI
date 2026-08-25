@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — CropGuard AI</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav>
+  <div class="brand">🌱 CropGuard AI</div>
+  <div>
+    <a href="dashboard.html">Dashboard</a>
+    <a href="scan.html">Scan Crop</a>
+    <a href="#" id="logoutLink">Logout</a>
+  </div>
+</nav>
+
+<div class="container">
+  <h2>Your Dashboard</h2>
+
+  <div class="dashboard-grid">
+    <div class="stat-card">
+      <div class="stat-value" id="totalScans">–</div>
+      <div class="stat-label">Total Scans</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="healthyCount">–</div>
+      <div class="stat-label">Healthy Results</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="atRiskCount">–</div>
+      <div class="stat-label">Needs Attention</div>
+    </div>
+  </div>
+
+  <div style="margin-bottom:20px;">
+    <a href="scan.html" class="btn">+ New Scan</a>
+  </div>
+
+  <h3>Recent Scans</h3>
+  <div id="reportList" class="report-list">
+    <p style="color:var(--muted)">Loading...</p>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script>
+requireAuth();
+
+document.getElementById("logoutLink").addEventListener("click", (e) => {
+  e.preventDefault();
+  clearToken();
+  window.location.href = "login.html";
+});
+
+async function loadDashboard() {
+  const listEl = document.getElementById("reportList");
+  try {
+    const reports = await apiRequest("/api/scan/history", { auth: true });
+
+    document.getElementById("totalScans").textContent = reports.length;
+    document.getElementById("healthyCount").textContent =
+      reports.filter(r => r.severity === "none").length;
+    document.getElementById("atRiskCount").textContent =
+      reports.filter(r => r.severity === "medium" || r.severity === "high").length;
+
+    if (reports.length === 0) {
+      listEl.innerHTML = `<p style="color:var(--muted)">No scans yet. Start with your first crop scan!</p>`;
+      return;
+    }
+
+    listEl.innerHTML = reports.map(r => `
+      <div class="report-item">
+        <div>
+          <div class="crop">${r.crop_name}</div>
+          <div class="disease">${r.predicted_disease} — ${Math.round(r.confidence * 100)}% confidence</div>
+        </div>
+        <span class="severity-badge severity-${r.severity}">${r.severity}</span>
+      </div>
+    `).join("");
+  } catch (err) {
+    listEl.innerHTML = `<p style="color:var(--danger)">Failed to load scans: ${err.message}</p>`;
+  }
+}
+
+loadDashboard();
+</script>
+
+</body>
+</html>

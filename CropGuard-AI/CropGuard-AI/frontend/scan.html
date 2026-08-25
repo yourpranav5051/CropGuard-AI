@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scan Crop — CropGuard AI</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav>
+  <div class="brand">🌱 CropGuard AI</div>
+  <div>
+    <a href="dashboard.html">Dashboard</a>
+    <a href="scan.html">Scan Crop</a>
+    <a href="#" id="logoutLink">Logout</a>
+  </div>
+</nav>
+
+<div class="container" style="max-width:520px;">
+  <h2>Scan a Crop Image</h2>
+  <div class="error-msg" id="errorMsg"></div>
+
+  <div class="form-group">
+    <label for="cropSelect">Crop</label>
+    <select id="cropSelect">
+      <option>Tomato</option>
+      <option>Wheat</option>
+      <option>Cotton</option>
+      <option>Sugarcane</option>
+      <option>Rice</option>
+      <option>Onion</option>
+      <option>Other</option>
+    </select>
+  </div>
+
+  <label for="imageInput" class="upload-box" id="uploadBox">
+    <div id="uploadPrompt">
+      <div style="font-size:2rem;">📷</div>
+      <p>Click to upload a crop or leaf photo</p>
+      <p style="font-size:0.8rem;">JPG or PNG</p>
+    </div>
+    <img id="previewImg" style="display:none;">
+  </label>
+  <input type="file" id="imageInput" accept="image/jpeg,image/png" style="display:none;">
+
+  <button class="btn" style="width:100%; margin-top:20px;" id="analyzeBtn" disabled>
+    Analyze Crop
+  </button>
+</div>
+
+<script src="js/api.js"></script>
+<script>
+requireAuth();
+
+document.getElementById("logoutLink").addEventListener("click", (e) => {
+  e.preventDefault();
+  clearToken();
+  window.location.href = "login.html";
+});
+
+const imageInput = document.getElementById("imageInput");
+const previewImg = document.getElementById("previewImg");
+const uploadPrompt = document.getElementById("uploadPrompt");
+const analyzeBtn = document.getElementById("analyzeBtn");
+let selectedFile = null;
+
+imageInput.addEventListener("change", () => {
+  const file = imageInput.files[0];
+  if (!file) return;
+  selectedFile = file;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    previewImg.src = e.target.result;
+    previewImg.style.display = "block";
+    uploadPrompt.style.display = "none";
+  };
+  reader.readAsDataURL(file);
+  analyzeBtn.disabled = false;
+});
+
+analyzeBtn.addEventListener("click", async () => {
+  const errorMsg = document.getElementById("errorMsg");
+  errorMsg.classList.remove("visible");
+
+  if (!selectedFile) return;
+
+  analyzeBtn.disabled = true;
+  analyzeBtn.textContent = "Analyzing...";
+
+  const formData = new FormData();
+  formData.append("crop_name", document.getElementById("cropSelect").value);
+  formData.append("image", selectedFile);
+
+  try {
+    const result = await apiRequest("/api/scan/analyze", {
+      method: "POST",
+      body: formData,
+      isForm: true,
+      auth: true,
+    });
+    sessionStorage.setItem("lastResult", JSON.stringify(result));
+    window.location.href = "result.html";
+  } catch (err) {
+    errorMsg.textContent = err.message;
+    errorMsg.classList.add("visible");
+    analyzeBtn.disabled = false;
+    analyzeBtn.textContent = "Analyze Crop";
+  }
+});
+</script>
+
+</body>
+</html>
