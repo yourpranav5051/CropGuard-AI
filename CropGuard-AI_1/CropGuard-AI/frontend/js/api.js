@@ -1,5 +1,6 @@
-// Central place for the backend URL — change this one line when you deploy.
-const API_BASE = "http://127.0.0.1:8000";
+// Central place for the backend URL — empty string because UI and API
+// are served from the same Express server.
+const API_BASE = "";
 
 function saveToken(token) {
   localStorage.setItem("cropguard_token", token);
