@@ -6,7 +6,7 @@
  * JWT_SECRET environment variable before deploying anywhere public.
  */
 const jwt = require("jsonwebtoken");
-const db = require("./db");
+const dbReady = require("./db");
 
 const SECRET_KEY = process.env.JWT_SECRET || "cropguard-demo-secret-change-me";
 const TOKEN_EXPIRY = "24h";
@@ -15,7 +15,7 @@ function createToken(userId) {
   return jwt.sign({ sub: String(userId) }, SECRET_KEY, { expiresIn: TOKEN_EXPIRY });
 }
 
-function requireAuth(req, res, next) {
+async function requireAuth(req, res, next) {
   const header = req.headers.authorization || "";
   const token = header.startsWith("Bearer ") ? header.slice(7) : null;
 
@@ -24,6 +24,7 @@ function requireAuth(req, res, next) {
   }
 
   try {
+    const db = await dbReady;
     const payload = jwt.verify(token, SECRET_KEY);
     const user = db.prepare("SELECT * FROM users WHERE id = ?").get(payload.sub);
     if (!user) {
